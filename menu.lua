@@ -48,6 +48,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
+-- 1. Xử lý Tăng Tốc
 local function ApplySpeed(character)
     local humanoid = character:WaitForChild("Humanoid")
     humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
@@ -79,47 +80,53 @@ ToggleSpeedBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local BodyGyro, BodyVelocity
-local FlyConnection
+-- 2. Xử lý chức năng Bay Siêu Nhân R6 cực mượt
+local flyVelocity, flyGyro, flyConnection
 
 local function StartFlying()
     local character = LocalPlayer.Character
     if not character then return end
-    local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
     if not rootPart then return end
     
-    BodyGyro = Instance.new("BodyGyro")
-    BodyGyro.P = 9e4
-    BodyGyro.maxTorque = Vector3.new(9e5, 9e5, 9e5)
-    BodyGyro.cframe = rootPart.CFrame
-    BodyGyro.Parent = rootPart
+    flyGyro = Instance.new("BodyGyro")
+    flyGyro.maxTorque = Vector3.new(4e5, 4e5, 4e5)
+    flyGyro.P = 1e4
+    flyGyro.cframe = rootPart.CFrame
+    flyGyro.Parent = rootPart
     
-    BodyVelocity = Instance.new("BodyVelocity")
-    BodyVelocity.velocity = Vector3.new(0, 0.1, 0)
-    BodyVelocity.maxForce = Vector3.new(9e5, 9e5, 9e5)
-    BodyVelocity.Parent = rootPart
+    flyVelocity = Instance.new("BodyVelocity")
+    flyVelocity.maxForce = Vector3.new(4e5, 4e5, 4e5)
+    flyVelocity.velocity = Vector3.new(0, 0, 0)
+    flyVelocity.Parent = rootPart
     
     local camera = workspace.CurrentCamera
+    local humanoid = character:FindFirstChild("Humanoid")
     
-    FlyConnection = RunService.RenderStepped:Connect(function()
-        if character and rootPart and character:FindFirstChild("Humanoid") then
-            character.Humanoid.PlatformStand = true
-            BodyGyro.cframe = camera.CFrame
+    flyConnection = RunService.RenderStepped:Connect(function()
+        if character and rootPart and humanoid then
+            humanoid.PlatformStand = true -- Đổi tư thế lơ lửng nằm ngang như siêu nhân
+            flyGyro.cframe = camera.CFrame
             
-            local moveDirection = character.Humanoid.MoveDirection
+            -- Tính toán hướng di chuyển dựa trên cần gạt Joystick/Nút di chuyển
+            local moveDirection = humanoid.MoveDirection
+            local speed = tonumber(SpeedInput.Text) or 70
+            
             if moveDirection.Magnitude > 0 then
-                BodyVelocity.velocity = camera.CFrame.LookVector * (tonumber(SpeedInput.Text) or 50)
+                -- Ép nhân vật bay thẳng theo hướng nhìn của camera
+                flyVelocity.velocity = camera.CFrame.LookVector * speed
             else
-                BodyVelocity.velocity = Vector3.new(0, 0, 0)
+                -- Đứng im trên không khi thả tay
+                flyVelocity.velocity = Vector3.new(0, 0, 0)
             end
         end
     end)
 end
 
 local function StopFlying()
-    if FlyConnection then FlyConnection:Disconnect() end
-    if BodyGyro then BodyGyro:Destroy() end
-    if BodyVelocity then BodyVelocity:Destroy() end
+    if flyConnection then flyConnection:Disconnect() end
+    if flyGyro then flyGyro:Destroy() end
+    if flyVelocity then flyVelocity:Destroy() end
     
     local character = LocalPlayer.Character
     if character and character:FindFirstChild("Humanoid") then
@@ -130,18 +137,4 @@ end
 ToggleFlyBtn.MouseButton1Click:Connect(function()
     IsFlyToggled = not IsFlyToggled
     if IsFlyToggled then
-        ToggleFlyBtn.Text = "TAT BAY"
-        ToggleFlyBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        StartFlying()
-    else
-        ToggleFlyBtn.Text = "BAT BAY"
-        ToggleFlyBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        StopFlying()
-    end
-end)
-
-LocalPlayer.CharacterAdded:Connect(function()
-    IsFlyToggled = false
-    ToggleFlyBtn.Text = "BAT BAY"
-    ToggleFlyBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-end)
+        ToggleFlyBtn.Text = "TAT
