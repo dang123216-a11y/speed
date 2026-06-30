@@ -1,0 +1,120 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local ToggleBtn = Instance.new("TextButton")
+local UICornerMain = Instance.new("UICorner")
+local UICornerBtn = Instance.new("UICorner")
+local Title = Instance.new("TextLabel")
+
+-- Cấu hình màu sắc Vũ trụ
+local SpaceBlue = Color3.fromRGB(15, 25, 45)
+local StarBright = Color3.fromRGB(100, 200, 255)
+local ButtonColor = Color3.fromRGB(25, 40, 70)
+
+-- Tạo GUI chính
+ScreenGui.Name = "GravitiTroll"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 160, 0, 260) -- Đã tăng chiều cao để đủ chỗ
+MainFrame.Position = UDim2.new(0.5, -80, 0.5, -130)
+MainFrame.BackgroundColor3 = SpaceBlue
+MainFrame.Active = true
+MainFrame.Draggable = true
+UICornerMain.Parent = MainFrame
+UICornerMain.CornerRadius = UDim.new(0, 12)
+
+-- Nút ẩn/hiện 🤫
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.Position = UDim2.new(0, 10, 0.8, 0)
+ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+ToggleBtn.BackgroundColor3 = StarBright
+ToggleBtn.Text = "🤫"
+ToggleBtn.TextColor3 = SpaceBlue
+ToggleBtn.TextSize = 25
+UICornerBtn.Parent = ToggleBtn
+UICornerBtn.CornerRadius = UDim.new(1, 0)
+ToggleBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+
+-- Tiêu đề
+Title.Parent = MainFrame
+Title.Text = "Graviti Troll"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = StarBright
+Title.Font = Enum.Font.GothamBold
+
+-- Hàm tạo nút chuẩn
+local function StyleButton(btn, text, yPos)
+    btn.Parent = MainFrame
+    btn.BackgroundColor3 = ButtonColor
+    btn.TextColor3 = Color3.fromRGB(200, 230, 255)
+    btn.Text = text
+    btn.BorderSizePixel = 0
+    btn.Position = UDim2.new(0, 10, 0, yPos)
+    btn.Size = UDim2.new(0, 140, 0, 35)
+    local corner = Instance.new("UICorner")
+    corner.Parent = btn
+    corner.CornerRadius = UDim.new(0, 8)
+end
+
+-- Các nút chức năng
+local SpeedUp = Instance.new("TextButton")
+local SpeedDown = Instance.new("TextButton")
+local ToggleESP = Instance.new("TextButton")
+local FlyBtn = Instance.new("TextButton")
+local FloatBtn = Instance.new("TextButton")
+
+StyleButton(SpeedUp, "Speed +", 45)
+StyleButton(SpeedDown, "Speed -", 85)
+StyleButton(ToggleESP, "Toggle ESP", 125)
+StyleButton(FlyBtn, "Fly: OFF", 165)
+StyleButton(FloatBtn, "Float: OFF", 205)
+
+-- Logic chức năng
+SpeedUp.MouseButton1Click:Connect(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed += 5 end)
+SpeedDown.MouseButton1Click:Connect(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = math.max(16, game.Players.LocalPlayer.Character.Humanoid.WalkSpeed - 5) end)
+
+ToggleESP.MouseButton1Click:Connect(function()
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer and p.Character then
+            if not p.Character:FindFirstChild("Highlight") then
+                local h = Instance.new("Highlight")
+                h.Parent = p.Character
+                h.FillColor = StarBright
+            else
+                p.Character.Highlight:Destroy()
+            end
+        end
+    end
+end)
+
+local flying = false
+local bodyVelocity, bodyGyro
+FlyBtn.MouseButton1Click:Connect(function()
+    flying = not flying
+    local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
+    if flying then
+        FlyBtn.Text = "Fly: ON"
+        bodyVelocity = Instance.new("BodyVelocity", hrp); bodyVelocity.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+        bodyGyro = Instance.new("BodyGyro", hrp); bodyGyro.MaxTorque = Vector3.new(1/0, 1/0, 1/0); bodyGyro.CFrame = hrp.CFrame
+        spawn(function() while flying do bodyGyro.CFrame = workspace.CurrentCamera.CFrame; bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * 50; task.wait() end end)
+    else
+        FlyBtn.Text = "Fly: OFF"
+        if bodyVelocity then bodyVelocity:Destroy() end
+        if bodyGyro then bodyGyro:Destroy() end
+    end
+end)
+
+local floating = false
+local floatVel
+FloatBtn.MouseButton1Click:Connect(function()
+    floating = not floating
+    local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
+    if floating then
+        FloatBtn.Text = "Float: ON"
+        floatVel = Instance.new("BodyVelocity", hrp); floatVel.MaxForce = Vector3.new(0, 1/0, 0); floatVel.Velocity = Vector3.new(0,0,0)
+    else
+        FloatBtn.Text = "Float: OFF"
+        if floatVel then floatVel:Destroy() end
+    end
+end)
